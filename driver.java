@@ -74,7 +74,7 @@ public class driver {
 	}
 	
 	public static void calibrateColour(int c) {
-		while (Button.LEFT.isUp()) {
+		while (Button.ENTER.isUp()) {
 			spColor.fetchSample(colourLevel, 0);
 			if (colourLevel[c] > maxColourLevel) {
 				maxColourLevel = colourLevel[c];
@@ -89,7 +89,7 @@ public class driver {
 	}
 	
 	public static void calibrateSound() {
-		while (!Button.ENTER.isDown()) {
+		while (Button.ENTER.isUp()) {
 			
 			spSound.fetchSample(soundLevel, 0);
 			
@@ -100,10 +100,12 @@ public class driver {
 			
 			if(soundLevel[0] < minSoundLevel) {
 				minSoundLevel = soundLevel[0];
+				LCD.drawString("Min Sound Lvl:" + minSoundLevel, 2, 2);
 			}
 			
 			if(soundLevel[0] > maxSoundLevel) {
 				maxSoundLevel = soundLevel[0];
+				LCD.drawString("Max Sound Lvl:" + maxSoundLevel, 2, 3);
 			}
 			
 		}
