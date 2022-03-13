@@ -51,7 +51,7 @@ public class rotatecar implements Behavior {
 			count++;
 		}
 		count = 0;
-		while (true && Button.ENTER.isUp() && count < 11 && !detected) {
+		while (true && Button.ENTER.isUp() && count < 12 && !detected) {
 			this.pilot.rotate(-10);
 			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);	
 			if (this.colorLevel[0] > this.colorThreshold) {
