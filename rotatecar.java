@@ -31,10 +31,29 @@ public class rotatecar implements Behavior {
 
 	@Override
 	public void action() {
-		// TODO Auto-generated method stub
-		for (int i = 0; i < 2; i++) {
-			this.pilot.rotateLeft();
-			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);			
+		boolean detected = false;
+		int count = 0;
+		while (true && Button.ENTER.isUp() && count < 6) {
+			this.pilot.rotate(10);
+			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);	
+			if (this.colorLevel[0] > this.colorThreshold) {
+				detected = true;
+				break;
+			}
+			if (this.colorLevel[1] > this.colorThreshold) {
+				detected = true;
+				break;
+			}
+			if (this.colorLevel[2] > this.colorThreshold) {
+				detected = true;
+				break;
+			}
+			count++;
+		}
+		count = 0;
+		while (true && Button.ENTER.isUp() && count < 11 && !detected) {
+			this.pilot.rotate(-10);
+			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);	
 			if (this.colorLevel[0] > this.colorThreshold) {
 				break;
 			}
@@ -44,19 +63,7 @@ public class rotatecar implements Behavior {
 			if (this.colorLevel[2] > this.colorThreshold) {
 				break;
 			}
-			
-			this.pilot.rotateRight();
-			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);
-			
-			if (this.colorLevel[0] > this.colorThreshold) {
-				break;
-			}
-			if (this.colorLevel[1] > this.colorThreshold) {
-				break;
-			}
-			if (this.colorLevel[2] > this.colorThreshold) {
-				break;
-			}
+			count++;
 		}
 	}
 

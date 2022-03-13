@@ -78,11 +78,11 @@ public class driver {
 			spColor.fetchSample(colourLevel, 0);
 			if (colourLevel[c] > maxColourLevel) {
 				maxColourLevel = colourLevel[c];
-				LCD.drawString("Mx Clr Lvl:" + maxColourLevel, 0, 2);
+				LCD.drawString("Mx Clr Lvl:" + Float.toString(maxColourLevel), 1, 1);
 			}
 			if (colourLevel[c] < minColourLevel) {
 				minColourLevel = colourLevel[c];
-				LCD.drawString("Mn Clr Lvl:" + minColourLevel, 0, 3);
+				LCD.drawString("Mn Clr Lvl:" + Float.toString(minColourLevel), 1, 2);
 			}
 			LCD.clear();
 		}
@@ -100,12 +100,12 @@ public class driver {
 			
 			if(soundLevel[0] < minSoundLevel) {
 				minSoundLevel = soundLevel[0];
-				LCD.drawString("Min Sound Lvl:" + minSoundLevel, 2, 2);
+				LCD.drawString("Min Sound Lvl:" + Float.toString(minSoundLevel), 1, 1);
 			}
 			
 			if(soundLevel[0] > maxSoundLevel) {
 				maxSoundLevel = soundLevel[0];
-				LCD.drawString("Max Sound Lvl:" + maxSoundLevel, 2, 3);
+				LCD.drawString("Max Sound Lvl:" + Float.toString(maxSoundLevel), 1, 2);
 			}
 			
 		}
