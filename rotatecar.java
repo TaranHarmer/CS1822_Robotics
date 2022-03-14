@@ -4,67 +4,70 @@ import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.subsumption.Behavior;
 
 public class rotatecar implements Behavior {
-	private float colorThreshold;
 	private MovePilot pilot;
 	private EV3ColorSensor colorSensor; //0 = red, 1 = green, 2 = blue
-	private float[] colorLevel;
- 	public rotatecar(float colorThreshold, MovePilot pilot, EV3ColorSensor colorSensor) {
-		this.colorThreshold = colorThreshold;
+	int[] colors; //0 = red, 1 = green, 2 = blue, thinks red is 0, thinks green is 1, thinks blue is 2
+	float[] colorID; //0 = none, 2 = blue, 3 = green, 5 = red, 6 = white
+ 	public RotateCar(float[] colorThreshold, MovePilot pilot, EV3ColorSensor colorSensor) {
 		this.pilot = pilot;
 		this.colorSensor = colorSensor;
-		this.colorLevel = new float[3];
+		this.colors = new int[3];
+		this.colors[0] = 0;
+		this.colors[1] = 1;
+		this.colors[2] = 2;
+		this.colorID = new float[1];
 	}
 	@Override
 	public boolean takeControl() {
-		this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);
+		this.colorSensor.getColorIDMode().fetchSample(colorID, 0);
 		boolean hasColor = false;
-		for (float level : colorLevel) {
-			if (level > this.colorThreshold) {
+		for (int ID : colors) {
+			if (ID == (int) colorID[0]) {
 				hasColor = true;
+				break;
 			}
 		}
-		if (hasColor) {
-			return false;
-		}
-		return true;
-	}
+		return !(hasColor);
+	
 
 	@Override
 	public void action() {
 		boolean detected = false;
-		int count = 0;
-		while (true && Button.ENTER.isUp() && count < 6) {
-			this.pilot.rotate(10);
-			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);	
-			if (this.colorLevel[0] > this.colorThreshold) {
-				detected = true;
+		int count = 1;
+		while (true) {
+			if (detected) {
 				break;
 			}
-			if (this.colorLevel[1] > this.colorThreshold) {
-				detected = true;
+			for (int i = 0; i < count && Button.ENTER.isUp(); i++) {
+				this.colorSensor.getColorIDMode().fetchSample(colorID, 0);	
+				Delay.msDelay(1000);
+				for (int ID : colors) {
+					if (ID == (int) colorID[0]) {
+						detected = true;
+						break;
+					}
+				}
+				this.pilot.rotate(10);
+				Delay.msDelay(1000);
+			}
+			if (detected) {
 				break;
 			}
-			if (this.colorLevel[2] > this.colorThreshold) {
-				detected = true;
-				break;
+			for (int i = 0; i < (2*count) && Button.ENTER.isUp(); i++) {
+				this.colorSensor.getColorIDMode().fetchSample(colorID, 0);
+				Delay.msDelay(1000);
+				for (int ID : colors) {
+					if (ID == (int) colorID[0]) {
+						detected = true;
+						break;
+					}
+				}
+				this.pilot.rotate(-10);
+				Delay.msDelay(1000);		
 			}
 			count++;
 		}
-		count = 0;
-		while (true && Button.ENTER.isUp() && count < 12 && !detected) {
-			this.pilot.rotate(-10);
-			this.colorSensor.getRGBMode().fetchSample(colorLevel, 0);	
-			if (this.colorLevel[0] > this.colorThreshold) {
-				break;
-			}
-			if (this.colorLevel[1] > this.colorThreshold) {
-				break;
-			}
-			if (this.colorLevel[2] > this.colorThreshold) {
-				break;
-			}
-			count++;
-		}
+
 	}
 
 	@Override
