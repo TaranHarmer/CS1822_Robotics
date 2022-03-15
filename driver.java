@@ -1,4 +1,3 @@
-package main_project;
 import lejos.hardware.Battery;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
@@ -19,13 +18,15 @@ import lejos.robotics.subsumption.Arbitrator;
 import lejos.robotics.subsumption.Behavior;
 import lejos.utility.Delay;
 
-public class driver {
+public class Driver {
 	final static float WHEEL_DIAMETER = 56; // The diameter (mm) of the wheels
 	final static float AXLE_LENGTH = 123; // The distance (mm) your two driven wheels
-	final static float ANGULAR_SPEED = 100; // How fast around corners (degrees/sec)
+	final static float ANGULAR_SPEED = 70; // How fast around corners (degrees/sec)
 	final static float LINEAR_SPEED = 900;
-	static float maxColourLevel = 0f;
-	static float minColourLevel = 1f;
+	static float maxColourLevel = 1f;
+	static float minColourLevel = 0f;
+	static float[] avgColourLevels;
+	static float[] colourID; //0 = none, 2 = blue, 3 = green, 5 = red, 6 = white, thinks red is 0, thinks green is 1, thinks blue is 2
 	static float minSoundLevel = 0;
 	static float maxSoundLevel = 0;
 	static float[] soundLevel;
@@ -35,25 +36,10 @@ public class driver {
 	public static void main(String[] args) {
 		colourLevel = new float[3]; //0 = red, 1 = green, 2 = blue
 		soundLevel = new float[1];
+		avgColourLevels = new float[3];
+		colourID = new float[1]; //0 = none, 2 = blue, 3 = green, 5 = red
 		EV3ColorSensor color = new EV3ColorSensor(SensorPort.S1);
 		NXTSoundSensor sound = new NXTSoundSensor(SensorPort.S3);
-		spSound = sound.getDBAMode();
-		spColor = color.getRGBMode();
-		float minSum = 0;
-		float maxSum = 0;
-		float colourAvg = 0;
-		calibrateColour(0);
-		minSum += minColourLevel;
-		maxSum += maxColourLevel;
-		calibrateColour(1);
-		minSum += minColourLevel;
-		maxSum += maxColourLevel;
-		calibrateColour(2);
-		minSum += minColourLevel;
-		maxSum += maxColourLevel;
-		colourAvg = (minSum + maxSum)/2;
-		calibrateSound();
-		float soundAvg = (minSoundLevel + maxSoundLevel)/2;
 		EV3UltrasonicSensor us1 = new EV3UltrasonicSensor(SensorPort.S2);
 		final SampleProvider sp = us1.getDistanceMode();
 		BaseRegulatedMotor mL = new EV3LargeRegulatedMotor(MotorPort.A);
@@ -63,54 +49,66 @@ public class driver {
 		Chassis chassis = new WheeledChassis((new Wheel[] {wRight, wLeft}),WheeledChassis.TYPE_DIFFERENTIAL);
 		MovePilot pilot = new MovePilot(chassis);
 		pilot.setLinearSpeed(LINEAR_SPEED);
-		clapcolour clapColor = new clapcolour(soundAvg, sound, color, colourAvg, pilot);
-		Behavior backup = new backup(pilot, sp);
-		Behavior dark = new dark(pilot, sp);
-		Behavior batteryLevel = new batterylevel(Battery.getVoltage());
-		Behavior rotateCar = new rotatecar(colourAvg, pilot, color);
-		Behavior[] ar = {clapColor, backup, dark, batteryLevel, rotateCar};
+		pilot.setAngularSpeed(ANGULAR_SPEED);
+		spSound = sound.getDBAMode();
+		spColor = color.getColorIDMode();
+		calibrateColour();
+		Delay.msDelay(1000);
+		calibrateSound();
+		float soundAvg = (minSoundLevel + maxSoundLevel)/2;
+		Behavior clapColor = new ClapColor(soundAvg, sound, color, colourID, pilot);
+		Behavior backup = new Backup(pilot, sp);
+		Behavior dark = new Dark(pilot, sp);
+		Behavior batteryLevel = new BatteryLevel(Battery.getVoltage());
+		Behavior rotateCar = new RotateCar(avgColourLevels, pilot, color);
+		Behavior interrupt = new Interrupt();
+		Behavior[] ar = {rotateCar, clapColor, interrupt};
 		Arbitrator ab = new Arbitrator(ar);
 		ab.go();
+		us1.close();
 	}
 	
-	public static void calibrateColour(int c) {
+	public static void calibrateColour() {
+		LCD.drawString("Press Enter Once Calibrated", 2, 0);
+		Delay.msDelay(1000);
 		while (Button.ENTER.isUp()) {
-			spColor.fetchSample(colourLevel, 0);
-			if (colourLevel[c] > maxColourLevel) {
-				maxColourLevel = colourLevel[c];
-				LCD.drawString("Mx Clr Lvl:" + Float.toString(maxColourLevel), 1, 1);
-			}
-			if (colourLevel[c] < minColourLevel) {
-				minColourLevel = colourLevel[c];
-				LCD.drawString("Mn Clr Lvl:" + Float.toString(minColourLevel), 1, 2);
-			}
+			spColor.fetchSample(colourID, 0);
+			LCD.drawInt((int) colourID[0], 1, 3);
+			Delay.msDelay(1000);
 			LCD.clear();
 		}
+		LCD.drawString("Calibrated", 1, 1);
+		Delay.msDelay(1000);
+		LCD.clear();
 	}
 	
 	public static void calibrateSound() {
+		LCD.drawString("Press Enter Once Calibrated", 2, 0);
+		Delay.msDelay(1000);
 		while (Button.ENTER.isUp()) {
 			
 			spSound.fetchSample(soundLevel, 0);
 			
-			if((minSoundLevel == 0) & (maxSoundLevel == 0) ) {
+			if((minSoundLevel == 0) && (maxSoundLevel == 0) ) {
 				minSoundLevel = soundLevel[0];
 				maxSoundLevel = soundLevel[0];				
 			} 			
 			
 			if(soundLevel[0] < minSoundLevel) {
 				minSoundLevel = soundLevel[0];
-				LCD.drawString("Min Sound Lvl:" + Float.toString(minSoundLevel), 1, 1);
+				LCD.drawString("Min Sound Lvl:" + Float.toString(minSoundLevel), 1, 3);
 			}
 			
 			if(soundLevel[0] > maxSoundLevel) {
 				maxSoundLevel = soundLevel[0];
-				LCD.drawString("Max Sound Lvl:" + Float.toString(maxSoundLevel), 1, 2);
+				LCD.drawString("Max Sound Lvl:" + Float.toString(maxSoundLevel), 1, 4);
 			}
 			
 		}
+		LCD.drawString("Calibrated", 1, 1);
+		Delay.msDelay(1000);
+		LCD.clear();
 	}
 		
 
 }
-
