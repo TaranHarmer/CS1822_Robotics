@@ -1,9 +1,10 @@
-package main_project;
+import lejos.hardware.Button;
 import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.subsumption.Behavior;
+import lejos.utility.Delay;
 
-public class rotatecar implements Behavior {
+public class RotateCar implements Behavior {
 	private MovePilot pilot;
 	private EV3ColorSensor colorSensor; //0 = red, 1 = green, 2 = blue
 	int[] colors; //0 = red, 1 = green, 2 = blue, thinks red is 0, thinks green is 1, thinks blue is 2
@@ -28,7 +29,7 @@ public class rotatecar implements Behavior {
 			}
 		}
 		return !(hasColor);
-	
+	}
 
 	@Override
 	public void action() {
@@ -47,6 +48,9 @@ public class rotatecar implements Behavior {
 						break;
 					}
 				}
+				if (detected) {
+					break;
+				}
 				this.pilot.rotate(10);
 				Delay.msDelay(1000);
 			}
@@ -62,6 +66,9 @@ public class rotatecar implements Behavior {
 						break;
 					}
 				}
+				if (detected) {
+					break;
+				}
 				this.pilot.rotate(-10);
 				Delay.msDelay(1000);		
 			}
@@ -72,8 +79,6 @@ public class rotatecar implements Behavior {
 
 	@Override
 	public void suppress() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
